@@ -23,31 +23,43 @@ fn main() {
         }
 
         for wall in walls.iter_mut() {
-            *wall = NONE;
+            *wall = BOTH;
         }
 
         for x in 0..(SIZE - 1) {
             use rand::random;
 
-            let place_right = random::<u8>() % 2 == 0;
-            if place_right {
-                walls[x] |= RIGHT;
-            } else {
+            let connect_right = random::<u8>() % 2 == 0;
+            if connect_right {
+                walls[x] ^= RIGHT;
+
                 sets[x + 1] = sets[x];
             }
         }
 
+        println!("{:?}", sets);
+
         for x in 0..SIZE {
             use rand::random;
 
-            let place_down = random::<u8>() % 2 == 0;
-            if place_down {
-                walls[x] |= DOWN;
+            let connect_down = random::<u8>() % 2 == 0;
+            if connect_down {
+                walls[x] ^= DOWN;
+            } else {
+                sets[x] = 0;
             }
         }
-
         *row = walls;
     }
+
+    for x in 0..(SIZE - 1) {
+        if sets[x] != sets[x + 1] && walls[x] & RIGHT != 0 {
+            walls[x] ^= RIGHT;
+        }
+        sets[x + 1] = sets[x];
+    }
+
+    labirint[labirint.len() - 1] = walls;
 
     // Print field to the screen
     println!("{}", "**".repeat(SIZE));
