@@ -14,7 +14,7 @@ fn main() {
     let mut walls = [RIGHT; SIZE];
 
     let mut counter = 1;
-    for row in labirint.iter_mut() {
+    for row in 0..labirint.len() {
         for cell in sets.iter_mut() {
             if *cell == 0 {
                 *cell = counter;
@@ -30,36 +30,36 @@ fn main() {
             use rand::random;
 
             let connect_right = random::<u8>() % 2 == 0;
-            if connect_right {
+            let equal = sets[x] == sets[x + 1];
+            if connect_right && !equal {
                 walls[x] ^= RIGHT;
 
                 sets[x + 1] = sets[x];
             }
         }
 
-        println!("{:?}", sets);
+        if row != labirint.len() - 1 {
+            for x in 0..SIZE - 1 {
+                use rand::random;
 
-        for x in 0..SIZE {
-            use rand::random;
-
-            let connect_down = random::<u8>() % 2 == 0;
-            if connect_down {
-                walls[x] ^= DOWN;
-            } else {
-                sets[x] = 0;
+                let connect_down = random::<u8>() % 2 == 0;
+                if connect_down {
+                    walls[x] ^= DOWN;
+                } else {
+                    sets[x] = 0;
+                }
+            }
+        } else {
+            for x in 0..(SIZE - 1) {
+                if sets[x] != sets[x + 1] && walls[x] & RIGHT != 0 {
+                    walls[x] ^= RIGHT;
+                }
+                sets[x + 1] = sets[x];
             }
         }
-        *row = walls;
-    }
 
-    for x in 0..(SIZE - 1) {
-        if sets[x] != sets[x + 1] && walls[x] & RIGHT != 0 {
-            walls[x] ^= RIGHT;
-        }
-        sets[x + 1] = sets[x];
+        labirint[row] = walls;
     }
-
-    labirint[labirint.len() - 1] = walls;
 
     // Print field to the screen
     println!("{}", "**".repeat(SIZE));
