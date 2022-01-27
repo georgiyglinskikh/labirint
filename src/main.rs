@@ -22,9 +22,7 @@ fn main() {
             }
         }
 
-        for wall in walls.iter_mut() {
-            *wall = BOTH;
-        }
+        walls = [BOTH; SIZE];
 
         for x in 0..(SIZE - 1) {
             use rand::random;
@@ -39,12 +37,16 @@ fn main() {
         }
 
         if row != labirint.len() - 1 {
+            let mut connected_sets: Vec<u8> = Vec::new();
+
             for x in 0..SIZE - 1 {
                 use rand::random;
 
                 let connect_down = random::<u8>() % 2 == 0;
-                if connect_down {
+                let connected = connected_sets.contains(&sets[x]);
+                if connect_down || !connected {
                     walls[x] ^= DOWN;
+                    connected_sets.push(sets[x]);
                 } else {
                     sets[x] = 0;
                 }
