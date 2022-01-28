@@ -9,102 +9,131 @@ const DOWN: Cell = 0b10;
 const BOTH: Cell = 0b11;
 
 type Line = Vec<Cell>;
-type Labirint = Vec<Line>;
 
-fn main() {
-    let lab = generate_labitint(10, 10);
-
-    print_labirint(&lab);
+struct Labirint {
+    width: usize,
+    height: usize,
+    lines: Vec<Line>,
+    counter: u8,
+    sets: Line,
+    walls: Line,
 }
 
-fn generate_labitint(width: usize, height: usize) -> Labirint {
-    let mut labirint = Labirint::with_capacity(height);
-
-    let mut sets: Line = vec![0; width];
-    let mut walls: Line = vec![BOTH; width];
-
-    let mut set_counter = 1;
-    for row in 0..height {
-        refresh_sets(&mut sets, &mut set_counter);
-
-        build_walls(&mut walls, width);
-
-        connect_sets_right(&mut sets, &mut walls, width);
-
-        if row != height - 1 {
-            connect_sets_down(&mut sets, &mut walls, width);
-        } else {
-            break_walls(&mut sets, &mut walls, width);
-        }
-
-        labirint.push(walls.clone());
-    }
-
-    labirint
-}
-
-fn build_walls(walls: &mut Line, width: usize) {
-    *walls = vec![BOTH; width];
-}
-
-fn refresh_sets(sets: &mut Line, counter: &mut Cell) {
-    for cell in sets.iter_mut() {
-        if *cell == 0 {
-            *cell = *counter;
-            *counter += 1;
+impl Labirint {
+    fn new(width: usize, height: usize) -> Self {
+        Labirint {
+            width,
+            height,
+            counter: 0,
+            lines: Vec::with_capacity(width),
+            sets: vec![0; width],
+            walls: vec![BOTH; width],
         }
     }
-}
 
-fn connect_sets_right(sets: &mut Line, walls: &mut Line, width: usize) {
-    for x in 0..width - 1 {
-        let connect_right = random::<u8>() % 2 == 0;
-        let equal = sets[x] == sets[x + 1];
-        if connect_right && !equal {
-            walls[x] ^= RIGHT;
+    fn generate(&mut self) {
+        for row in 0..self.height {
+            self.refresh_sets();
 
-            sets[x + 1] = sets[x];
+            self.build_walls();
+
+            self.connect_sets_right();
+
+            if row != self.height - 1 {
+                self.connect_sets_down();
+            } else {
+                self.break_walls();
+            }
+
+            self.lines.push(self.walls.clone());
         }
     }
-}
 
-fn connect_sets_down(sets: &mut Line, walls: &mut Line, width: usize) {
-    let mut connected_sets: Line = Line::with_capacity(width);
-
-    for x in 0..width {
-        let connect_down = random::<u8>() % 2 == 0;
-        let connected = connected_sets.contains(&sets[x]);
-        if connect_down || !connected {
-            walls[x] ^= DOWN;
-            connected_sets.push(sets[x]);
-        } else {
-            sets[x] = 0;
-        }
-    }
-}
-
-fn break_walls(sets: &mut Line, walls: &mut Line, width: usize) {
-    for x in 0..width - 1 {
-        if sets[x] != sets[x + 1] && walls[x] & RIGHT != 0 {
-            walls[x] ^= RIGHT;
-        }
-        sets[x + 1] = sets[x];
-    }
-}
-
-fn print_labirint(labirint: &Labirint) {
-    println!("{}", "**".repeat(labirint.len()));
-    for row in labirint.iter() {
-        for cell in row.iter() {
-            match *cell {
-                NONE => print!("  "),
-                RIGHT => print!(" |"),
-                DOWN => print!("_ "),
-                BOTH => print!("_|"),
-                _ => continue,
+    fn refresh_sets(&mut self) {
+        for cell in self.sets.iter_mut() {
+            if *cell == 0 {
+                *cell = self.counter;
+                self.counter += 1;
             }
         }
-        println!();
     }
-    println!("{}", "**".repeat(labirint.len()));
+
+    fn build_walls(&mut self) {
+        self.walls = vec![BOTH; self.width];
+    }
+
+    fn connect_sets_right(&mut self) {
+        for x in 0..self.width - 1 {
+            let connect_right = random::<u8>() % 2 == 0;
+            let equal = self.sets[x] == self.sets[x + 1];
+            if connect_right && !equal {
+                self.walls[x] ^= RIGHT;
+
+                self.sets[x + 1] = self.sets[x];
+            }
+        }
+    }
+
+    fn connect_sets_down(&mut self) {
+        let mut connected_sets: Line = Line::with_capacity(self.width);
+
+        for x in 0..self.width {
+            let connect_down = random::<u8>() % 2 == 0;
+            let connected = connected_sets.contains(&self.sets[x]);
+            if connect_down || !connected {
+                self.walls[x] ^= DOWN;
+                connected_sets.push(self.sets[x]);
+            } else {
+                self.sets[x] = 0;
+            }
+        }
+    }
+
+    fn break_walls(&mut self) {
+        for x in 0..self.width - 1 {
+            if self.sets[x] != self.sets[x + 1] && self.walls[x] & RIGHT != 0 {
+                self.walls[x] ^= RIGHT;
+            }
+            self.sets[x + 1] = self.sets[x];
+        }
+    }
+}
+
+impl ToString for Labirint {
+    fn to_string(&self) -> String {
+        let mut buf = String::new();
+
+        let new_line = '\n';
+        let none = "  ";
+        let right = " |";
+        let down = "__";
+        let both = "_|";
+
+        for row in self.lines.iter() {
+            for cell in row.iter() {
+                String::push_str(
+                    &mut buf,
+                    match *cell {
+                        NONE => none,
+                        RIGHT => right,
+                        DOWN => down,
+                        BOTH => both,
+                        _ => continue,
+                    },
+                );
+            }
+            String::push(&mut buf, new_line);
+        }
+
+        buf
+    }
+}
+
+fn main() {
+    let mut lab = Labirint::new(10, 10);
+    lab.generate();
+
+    println!("{}", "**".repeat(lab.width));
+    print!("{}", lab.to_string());
+    println!("{}", "**".repeat(lab.width));
 }
