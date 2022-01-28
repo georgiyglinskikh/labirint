@@ -1,20 +1,29 @@
+use rand::random;
+
+type Cell = u8;
+
+// Cell possible states
+const NONE: Cell = 0b00;
+const RIGHT: Cell = 0b01;
+const DOWN: Cell = 0b10;
+const BOTH: Cell = 0b11;
+
+type Labirint = Vec<Vec<Cell>>;
+
 fn main() {
-    // Field size
-    const SIZE: usize = 10;
+    let lab = generate_labitint(10, 10);
 
-    // Cell possible states
-    const NONE: u8 = 0b00;
-    const RIGHT: u8 = 0b01;
-    const DOWN: u8 = 0b10;
-    const BOTH: u8 = 0b11;
+    print_labirint(&lab);
+}
 
-    let mut labirint = [[0u8; SIZE]; SIZE];
+fn generate_labitint(width: usize, height: usize) -> Labirint {
+    let mut labirint = Labirint::with_capacity(height);
 
-    let mut sets = [0u8; SIZE];
-    let mut walls = [RIGHT; SIZE];
+    let mut sets: Vec<Cell> = vec![0; width];
+    let mut walls: Vec<Cell>;
 
     let mut counter = 1;
-    for row in 0..labirint.len() {
+    for row in 0..height {
         for cell in sets.iter_mut() {
             if *cell == 0 {
                 *cell = counter;
@@ -22,11 +31,9 @@ fn main() {
             }
         }
 
-        walls = [BOTH; SIZE];
+        walls = vec![BOTH; width];
 
-        for x in 0..(SIZE - 1) {
-            use rand::random;
-
+        for x in 0..width - 1 {
             let connect_right = random::<u8>() % 2 == 0;
             let equal = sets[x] == sets[x + 1];
             if connect_right && !equal {
@@ -36,12 +43,10 @@ fn main() {
             }
         }
 
-        if row != labirint.len() - 1 {
+        if row != height - 1 {
             let mut connected_sets: Vec<u8> = Vec::new();
 
-            for x in 0..SIZE - 1 {
-                use rand::random;
-
+            for x in 0..width - 1 {
                 let connect_down = random::<u8>() % 2 == 0;
                 let connected = connected_sets.contains(&sets[x]);
                 if connect_down || !connected {
@@ -52,7 +57,7 @@ fn main() {
                 }
             }
         } else {
-            for x in 0..(SIZE - 1) {
+            for x in 0..width - 1 {
                 if sets[x] != sets[x + 1] && walls[x] & RIGHT != 0 {
                     walls[x] ^= RIGHT;
                 }
@@ -60,11 +65,14 @@ fn main() {
             }
         }
 
-        labirint[row] = walls;
+        labirint.push(walls.clone());
     }
 
-    // Print field to the screen
-    println!("{}", "**".repeat(SIZE));
+    labirint
+}
+
+fn print_labirint(labirint: &Labirint) {
+    println!("{}", "**".repeat(labirint.len()));
     for row in labirint.iter() {
         for cell in row.iter() {
             match *cell {
@@ -77,5 +85,5 @@ fn main() {
         }
         println!();
     }
-    println!("{}", "**".repeat(SIZE));
+    println!("{}", "**".repeat(labirint.len()));
 }
